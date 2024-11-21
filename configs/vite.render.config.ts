@@ -7,7 +7,6 @@ import { prerelease } from "semver"
 import type { UserConfig } from "vite"
 
 import { astPlugin } from "../plugins/vite/ast"
-import { customI18nHmrPlugin } from "../plugins/vite/i18n-hmr"
 import { localesPlugin } from "../plugins/vite/locales"
 import i18nCompleteness from "../plugins/vite/utils/i18n-completeness"
 import { getGitHash } from "../scripts/lib"
@@ -45,7 +44,6 @@ export const viteRenderBaseConfig = {
 
     localesPlugin(),
     astPlugin,
-    customI18nHmrPlugin(),
   ],
   define: {
     APP_VERSION: JSON.stringify(pkg.version),

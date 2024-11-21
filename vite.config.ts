@@ -5,9 +5,6 @@ import { defineConfig, loadEnv } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
 import { viteRenderBaseConfig } from "./configs/vite.render.config"
-import type { env as EnvType } from "./packages/shared/src/env"
-import { htmlInjectPlugin } from "./plugins/vite/html-inject"
-import { createPlatformSpecificImportPlugin } from "./plugins/vite/specific-import"
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
 
@@ -15,7 +12,6 @@ const ROOT = "./apps/renderer"
 
 export default ({ mode }) => {
   const env = loadEnv(mode, process.cwd())
-  const typedEnv = env as typeof EnvType
 
   return defineConfig({
     ...viteRenderBaseConfig,
@@ -24,7 +20,7 @@ export default ({ mode }) => {
     build: {
       outDir: resolve(__dirname, "out/web"),
       target: "ES2022",
-      sourcemap: false,
+
       rollupOptions: {
         input: {
           main: resolve(ROOT, "/index.html"),
@@ -114,13 +110,7 @@ export default ({ mode }) => {
           type: "module",
         },
       }),
-      htmlInjectPlugin(typedEnv),
-      createPlatformSpecificImportPlugin(false),
     ],
-
-    worker: {
-      format: "es",
-    },
 
     define: {
       ...viteRenderBaseConfig.define,
