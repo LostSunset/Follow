@@ -10,6 +10,7 @@ import type { FC, PropsWithChildren } from "react"
 import { Suspense } from "react"
 import { HotkeysProvider } from "react-hotkeys-hook"
 
+import { ReloadPrompt } from "~/components/common/ReloadPrompt"
 import { HotKeyScopeMap } from "~/constants/hotkeys"
 import { jotaiStore } from "~/lib/jotai"
 import { persistConfig, queryClient } from "~/lib/query-client"
@@ -22,7 +23,6 @@ import {
   LazyExternalJumpInProvider,
   LazyLottieRenderContainer,
   LazyModalStackProvider,
-  ReloadPrompt,
   // specific import should add `index` postfix
 } from "./lazy/index"
 import { ServerConfigsProvider } from "./server-configs-provider"
@@ -36,6 +36,7 @@ export const RootProviders: FC<PropsWithChildren> = ({ children }) => (
         <Provider store={jotaiStore}>
           <I18nProvider>
             <Toaster />
+            <ReloadPrompt />
             <EventProvider />
 
             <UserProvider />
@@ -53,7 +54,6 @@ export const RootProviders: FC<PropsWithChildren> = ({ children }) => (
               <LazyContextMenuProvider />
               <LazyLottieRenderContainer />
               <LazyExternalJumpInProvider />
-              <ReloadPrompt />
             </Suspense>
           </I18nProvider>
         </Provider>
