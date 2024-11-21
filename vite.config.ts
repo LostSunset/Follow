@@ -10,7 +10,7 @@ import { htmlInjectPlugin } from "./plugins/vite/html-inject"
 import { createPlatformSpecificImportPlugin } from "./plugins/vite/specific-import"
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
-const isCI = process.env.CI === "true" || process.env.CI === "1"
+
 const ROOT = "./apps/renderer"
 
 export default ({ mode }) => {
@@ -24,7 +24,7 @@ export default ({ mode }) => {
     build: {
       outDir: resolve(__dirname, "out/web"),
       target: "ES2022",
-      sourcemap: isCI,
+      sourcemap: false,
       rollupOptions: {
         input: {
           main: resolve(ROOT, "/index.html"),
