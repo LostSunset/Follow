@@ -118,6 +118,10 @@ export default ({ mode }) => {
       createPlatformSpecificImportPlugin(false),
     ],
 
+    worker: {
+      format: "es",
+    },
+
     define: {
       ...viteRenderBaseConfig.define,
       ELECTRON: "false",
