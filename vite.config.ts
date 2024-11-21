@@ -5,6 +5,7 @@ import { defineConfig, loadEnv } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
 import { viteRenderBaseConfig } from "./configs/vite.render.config"
+import { createPlatformSpecificImportPlugin } from "./plugins/vite/specific-import"
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
 
@@ -110,6 +111,7 @@ export default ({ mode }) => {
           type: "module",
         },
       }),
+      createPlatformSpecificImportPlugin(false),
     ],
 
     define: {
