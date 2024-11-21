@@ -1,0 +1,12 @@
+diff --git a/dist/client/build/react.js b/dist/client/build/react.js
+index 6eb2d9d97a9ebe9b4150bdcef27ba35d32dd1544..b042010e4b0ff3b09b3b7922773487873b4c4bee 100644
+--- a/dist/client/build/react.js
++++ b/dist/client/build/react.js
+@@ -59,6 +59,7 @@ function registerSW(options = {}) {
+             onNeedRefresh?.();
+           };
+           wb.addEventListener("installed", (event) => {
++            console.log("installed", event, onNeedRefreshCalled);
+             if (typeof event.isUpdate === "undefined") {
+               if (typeof event.isExternal !== "undefined") {
+                 if (event.isExternal)
