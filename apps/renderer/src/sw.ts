@@ -23,5 +23,15 @@ let allowlist
 // in dev mode, we disable precaching to avoid caching issues
 if (import.meta.env.DEV) allowlist = [/^\/$/]
 
+let denylist: undefined | RegExp[]
+if (import.meta.env.PROD) {
+  denylist = [
+    // exclude sw: if the user navigates to it, fallback to index.html
+    /^\/sw.js$/,
+    // exclude webmanifest: has its own cache
+    /^\/manifest-(.*).webmanifest$/,
+  ]
+}
+
 // to allow work offline
-registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html"), { allowlist }))
+registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html"), { allowlist, denylist }))
