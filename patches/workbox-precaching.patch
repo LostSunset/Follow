@@ -1,262 +1,32 @@
-diff --git a/PrecacheController.js b/PrecacheController.js
-index e00975e3762dc6382c39bebee04a89a651aae3d0..063092f6cdcd1e487d3f26829de7736d28efb63a 100644
---- a/PrecacheController.js
-+++ b/PrecacheController.js
-@@ -17,6 +17,219 @@ import { printCleanupDetails } from './utils/printCleanupDetails.js';
- import { printInstallDetails } from './utils/printInstallDetails.js';
- import { PrecacheStrategy } from './PrecacheStrategy.js';
- import './_version.js';
-+
-+
-+function _classPrivateFieldInitSpec(e, t, a) {
-+  _checkPrivateRedeclaration(e, t), t.set(e, a);
-+}
-+function _checkPrivateRedeclaration(e, t) {
-+  if (t.has(e))
-+    throw new TypeError(
-+      "Cannot initialize the same private elements twice on an object"
-+    );
-+}
-+function _classPrivateFieldSet(s, a, r) {
-+  return s.set(_assertClassBrand(s, a), r), r;
-+}
-+function _classPrivateFieldGet(s, a) {
-+  return s.get(_assertClassBrand(s, a));
-+}
-+function _assertClassBrand(e, t, n) {
-+  if ("function" == typeof e ? e === t : e.has(t))
-+    return arguments.length < 3 ? t : n;
-+  throw new TypeError("Private element is not present on this object");
-+}
-+function _defineProperty(e, r, t) {
-+  return (
-+    (r = _toPropertyKey(r)) in e
-+      ? Object.defineProperty(e, r, {
-+          value: t,
-+          enumerable: !0,
-+          configurable: !0,
-+          writable: !0
-+        })
-+      : (e[r] = t),
-+    e
-+  );
-+}
-+function _toPropertyKey(t) {
-+  var i = _toPrimitive(t, "string");
-+  return "symbol" == typeof i ? i : i + "";
-+}
-+function _toPrimitive(t, r) {
-+  if ("object" != typeof t || !t) return t;
-+  var e = t[Symbol.toPrimitive];
-+  if (void 0 !== e) {
-+    var i = e.call(t, r || "default");
-+    if ("object" != typeof i) return i;
-+    throw new TypeError("@@toPrimitive must return a primitive value.");
-+  }
-+  return ("string" === r ? String : Number)(t);
-+}
-+class Node {
-+  constructor(value) {
-+    _defineProperty(this, "value", void 0);
-+    _defineProperty(this, "next", void 0);
-+    this.value = value;
-+  }
-+}
-+var _head = /*#__PURE__*/ new WeakMap();
-+var _tail = /*#__PURE__*/ new WeakMap();
-+var _size = /*#__PURE__*/ new WeakMap();
-+class Queue {
-+  constructor() {
-+    _classPrivateFieldInitSpec(this, _head, void 0);
-+    _classPrivateFieldInitSpec(this, _tail, void 0);
-+    _classPrivateFieldInitSpec(this, _size, void 0);
-+    this.clear();
-+  }
-+  enqueue(value) {
-+    var _this$size, _this$size2;
-+    const node = new Node(value);
-+    if (_classPrivateFieldGet(_head, this)) {
-+      _classPrivateFieldGet(_tail, this).next = node;
-+      _classPrivateFieldSet(_tail, this, node);
-+    } else {
-+      _classPrivateFieldSet(_head, this, node);
-+      _classPrivateFieldSet(_tail, this, node);
-+    }
-+    _classPrivateFieldSet(
-+      _size,
-+      this,
-+      ((_this$size = _classPrivateFieldGet(_size, this)),
-+      (_this$size2 = _this$size++),
-+      _this$size)
-+    ),
-+      _this$size2;
-+  }
-+  dequeue() {
-+    var _this$size3, _this$size4;
-+    const current = _classPrivateFieldGet(_head, this);
-+    if (!current) {
-+      return;
-+    }
-+    _classPrivateFieldSet(_head, this, _classPrivateFieldGet(_head, this).next);
-+    _classPrivateFieldSet(
-+      _size,
-+      this,
-+      ((_this$size3 = _classPrivateFieldGet(_size, this)),
-+      (_this$size4 = _this$size3--),
-+      _this$size3)
-+    ),
-+      _this$size4;
-+    return current.value;
-+  }
-+  peek() {
-+    if (!_classPrivateFieldGet(_head, this)) {
-+      return;
-+    }
-+    return _classPrivateFieldGet(_head, this).value;
-+
-+    // TODO: Node.js 18.
-+    // return this.#head?.value;
-+  }
-+  clear() {
-+    _classPrivateFieldSet(_head, this, undefined);
-+    _classPrivateFieldSet(_tail, this, undefined);
-+    _classPrivateFieldSet(_size, this, 0);
-+  }
-+  get size() {
-+    return _classPrivateFieldGet(_size, this);
-+  }
-+  *[Symbol.iterator]() {
-+    let current = _classPrivateFieldGet(_head, this);
-+    while (current) {
-+      yield current.value;
-+      current = current.next;
-+    }
-+  }
-+}
-+function pLimit(concurrency) {
-+  validateConcurrency(concurrency);
-+  const queue = new Queue();
-+  let activeCount = 0;
-+  const resumeNext = () => {
-+    if (activeCount < concurrency && queue.size > 0) {
-+      queue.dequeue()();
-+      // Since `pendingCount` has been decreased by one, increase `activeCount` by one.
-+      activeCount++;
-+    }
-+  };
-+  const next = () => {
-+    activeCount--;
-+    resumeNext();
-+  };
-+  const run = async (function_, resolve, arguments_) => {
-+    const result = (async () => function_(...arguments_))();
-+    resolve(result);
-+    try {
-+      await result;
-+    } catch {}
-+    next();
-+  };
-+  const enqueue = (function_, resolve, arguments_) => {
-+    // Queue `internalResolve` instead of the `run` function
-+    // to preserve asynchronous context.
-+    new Promise((internalResolve) => {
-+      queue.enqueue(internalResolve);
-+    }).then(run.bind(undefined, function_, resolve, arguments_));
-+    (async () => {
-+      // This function needs to wait until the next microtask before comparing
-+      // `activeCount` to `concurrency`, because `activeCount` is updated asynchronously
-+      // after the `internalResolve` function is dequeued and called. The comparison in the if-statement
-+      // needs to happen asynchronously as well to get an up-to-date value for `activeCount`.
-+      await Promise.resolve();
-+      if (activeCount < concurrency) {
-+        resumeNext();
-+      }
-+    })();
-+  };
-+  const generator = (function_, ...arguments_) =>
-+    new Promise((resolve) => {
-+      enqueue(function_, resolve, arguments_);
-+    });
-+  Object.defineProperties(generator, {
-+    activeCount: {
-+      get: () => activeCount
-+    },
-+    pendingCount: {
-+      get: () => queue.size
-+    },
-+    clearQueue: {
-+      value() {
-+        queue.clear();
-+      }
-+    },
-+    concurrency: {
-+      get: () => concurrency,
-+      set(newConcurrency) {
-+        validateConcurrency(newConcurrency);
-+        concurrency = newConcurrency;
-+        queueMicrotask(() => {
-+          // eslint-disable-next-line no-unmodified-loop-condition
-+          while (activeCount < concurrency && queue.size > 0) {
-+            resumeNext();
-+          }
-+        });
-+      }
-+    }
-+  });
-+  return generator;
-+}
-+function validateConcurrency(concurrency) {
-+  if (
-+    !(
-+      (Number.isInteger(concurrency) ||
-+        concurrency === Number.POSITIVE_INFINITY) &&
-+      concurrency > 0
-+    )
-+  ) {
-+    throw new TypeError("Expected `concurrency` to be a number from 1 and up");
-+  }
-+}
-+
-+const limit = pLimit(10);
-+
- /**
-  * Performs efficient precaching of assets.
-  *
-@@ -152,20 +365,24 @@ class PrecacheController {
+diff --git a/node_modules/workbox-precaching/PrecacheController.js b/node_modules/workbox-precaching/PrecacheController.js
+index e00975e..7380049 100644
+--- a/node_modules/workbox-precaching/PrecacheController.js
++++ b/node_modules/workbox-precaching/PrecacheController.js
+@@ -5,6 +5,7 @@
+   license that can be found in the LICENSE file or at
+   https://opensource.org/licenses/MIT.
+ */
++import eachLimit from 'async-es/eachLimit'
+ import { assert } from 'workbox-core/_private/assert.js';
+ import { cacheNames } from 'workbox-core/_private/cacheNames.js';
+ import { logger } from 'workbox-core/_private/logger.js';
+@@ -150,9 +151,8 @@ class PrecacheController {
+         return waitUntil(event, async () => {
+             const installReportPlugin = new PrecacheInstallReportPlugin();
              this.strategy.plugins.push(installReportPlugin);
-             // Cache entries one at a time.
+-            // Cache entries one at a time.
              // See https://github.com/GoogleChrome/workbox/issues/2528
 -            for (const [url, cacheKey] of this._urlsToCacheKeys) {
--                const integrity = this._cacheKeysToIntegrities.get(cacheKey);
--                const cacheMode = this._urlsToCacheModes.get(url);
--                const request = new Request(url, {
--                    integrity,
--                    cache: cacheMode,
--                    credentials: 'same-origin',
-+            await Promise.all(
-+              this._urlsToCacheKeys.entries().map(([url, cacheKey]) => {
-+                return limit(async () => {
-+                  const integrity = this._cacheKeysToIntegrities.get(cacheKey);
-+                  const cacheMode = this._urlsToCacheModes.get(url);
-+                  const request = new Request(url, {
-+                      integrity,
-+                      cache: cacheMode,
-+                      credentials: 'same-origin',
-+                  });
-+                  await Promise.all(this.strategy.handleAll({
-+                      params: { cacheKey },
-+                      request,
-+                      event,
-+                  }));
-                 });
--                await Promise.all(this.strategy.handleAll({
--                    params: { cacheKey },
--                    request,
--                    event,
--                }));
++            await eachLimit(this._urlsToCacheKeys, 10, async ([url, cacheKey]) => {
+                 const integrity = this._cacheKeysToIntegrities.get(cacheKey);
+                 const cacheMode = this._urlsToCacheModes.get(url);
+                 const request = new Request(url, {
+@@ -165,7 +165,7 @@ class PrecacheController {
+                     request,
+                     event,
+                 }));
 -            }
-+              }
-+            ));
++            })
              const { updatedURLs, notUpdatedURLs } = installReportPlugin;
              if (process.env.NODE_ENV !== 'production') {
                  printInstallDetails(updatedURLs, notUpdatedURLs);
