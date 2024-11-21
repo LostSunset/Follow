@@ -1,26 +1,188 @@
 diff --git a/PrecacheController.js b/PrecacheController.js
-index e00975e3762dc6382c39bebee04a89a651aae3d0..c8ff7eb1a5821fd5ccf218908a1a2355b0d57dae 100644
+index e00975e3762dc6382c39bebee04a89a651aae3d0..4e6e8b968436bfb5b02be896690bf301441539b9 100644
 --- a/PrecacheController.js
 +++ b/PrecacheController.js
-@@ -5,6 +5,7 @@
-   license that can be found in the LICENSE file or at
-   https://opensource.org/licenses/MIT.
- */
-+import pLimit from 'p-limit';
- import { assert } from 'workbox-core/_private/assert.js';
- import { cacheNames } from 'workbox-core/_private/cacheNames.js';
- import { logger } from 'workbox-core/_private/logger.js';
-@@ -17,6 +18,9 @@ import { printCleanupDetails } from './utils/printCleanupDetails.js';
+@@ -17,6 +17,179 @@ import { printCleanupDetails } from './utils/printCleanupDetails.js';
  import { printInstallDetails } from './utils/printInstallDetails.js';
  import { PrecacheStrategy } from './PrecacheStrategy.js';
  import './_version.js';
++
++class Node {
++	value;
++	next;
++
++	constructor(value) {
++		this.value = value;
++	}
++}
++
++class Queue {
++	#head;
++	#tail;
++	#size;
++
++	constructor() {
++		this.clear();
++	}
++
++	enqueue(value) {
++		const node = new Node(value);
++
++		if (this.#head) {
++			this.#tail.next = node;
++			this.#tail = node;
++		} else {
++			this.#head = node;
++			this.#tail = node;
++		}
++
++		this.#size++;
++	}
++
++	dequeue() {
++		const current = this.#head;
++		if (!current) {
++			return;
++		}
++
++		this.#head = this.#head.next;
++		this.#size--;
++		return current.value;
++	}
++
++	peek() {
++		if (!this.#head) {
++			return;
++		}
++
++		return this.#head.value;
++
++		// TODO: Node.js 18.
++		// return this.#head?.value;
++	}
++
++	clear() {
++		this.#head = undefined;
++		this.#tail = undefined;
++		this.#size = 0;
++	}
++
++	get size() {
++		return this.#size;
++	}
++
++	* [Symbol.iterator]() {
++		let current = this.#head;
++
++		while (current) {
++			yield current.value;
++			current = current.next;
++		}
++	}
++}
++
++function pLimit(concurrency) {
++	validateConcurrency(concurrency);
++
++	const queue = new Queue();
++	let activeCount = 0;
++
++	const resumeNext = () => {
++		if (activeCount < concurrency && queue.size > 0) {
++			queue.dequeue()();
++			// Since `pendingCount` has been decreased by one, increase `activeCount` by one.
++			activeCount++;
++		}
++	};
++
++	const next = () => {
++		activeCount--;
++
++		resumeNext();
++	};
++
++	const run = async (function_, resolve, arguments_) => {
++		const result = (async () => function_(...arguments_))();
++
++		resolve(result);
++
++		try {
++			await result;
++		} catch {}
++
++		next();
++	};
++
++	const enqueue = (function_, resolve, arguments_) => {
++		// Queue `internalResolve` instead of the `run` function
++		// to preserve asynchronous context.
++		new Promise(internalResolve => {
++			queue.enqueue(internalResolve);
++		}).then(
++			run.bind(undefined, function_, resolve, arguments_),
++		);
++
++		(async () => {
++			// This function needs to wait until the next microtask before comparing
++			// `activeCount` to `concurrency`, because `activeCount` is updated asynchronously
++			// after the `internalResolve` function is dequeued and called. The comparison in the if-statement
++			// needs to happen asynchronously as well to get an up-to-date value for `activeCount`.
++			await Promise.resolve();
++
++			if (activeCount < concurrency) {
++				resumeNext();
++			}
++		})();
++	};
++
++	const generator = (function_, ...arguments_) => new Promise(resolve => {
++		enqueue(function_, resolve, arguments_);
++	});
++
++	Object.defineProperties(generator, {
++		activeCount: {
++			get: () => activeCount,
++		},
++		pendingCount: {
++			get: () => queue.size,
++		},
++		clearQueue: {
++			value() {
++				queue.clear();
++			},
++		},
++		concurrency: {
++			get: () => concurrency,
++
++			set(newConcurrency) {
++				validateConcurrency(newConcurrency);
++				concurrency = newConcurrency;
++
++				queueMicrotask(() => {
++					// eslint-disable-next-line no-unmodified-loop-condition
++					while (activeCount < concurrency && queue.size > 0) {
++						resumeNext();
++					}
++				});
++			},
++		},
++	});
++
++	return generator;
++}
++
++function validateConcurrency(concurrency) {
++	if (!((Number.isInteger(concurrency) || concurrency === Number.POSITIVE_INFINITY) && concurrency > 0)) {
++		throw new TypeError('Expected `concurrency` to be a number from 1 and up');
++	}
++}
 +
 +const limit = pLimit(10);
 +
  /**
   * Performs efficient precaching of assets.
   *
-@@ -152,20 +156,29 @@ class PrecacheController {
+@@ -152,20 +325,29 @@ class PrecacheController {
              this.strategy.plugins.push(installReportPlugin);
              // Cache entries one at a time.
              // See https://github.com/GoogleChrome/workbox/issues/2528
@@ -37,7 +199,7 @@ index e00975e3762dc6382c39bebee04a89a651aae3d0..c8ff7eb1a5821fd5ccf218908a1a2355
 +
 +            await Promise.all(
 +              this._urlsToCacheKeys.entries().map(([url, cacheKey]) => {
-+                return limit( async() => {
++                return limit(async () => {
 +                  const integrity = this._cacheKeysToIntegrities.get(cacheKey);
 +                  const cacheMode = this._urlsToCacheModes.get(url);
 +                  const request = new Request(url, {
@@ -57,8 +219,8 @@ index e00975e3762dc6382c39bebee04a89a651aae3d0..c8ff7eb1a5821fd5ccf218908a1a2355
 -                    event,
 -                }));
 -            }
-+              })
-+            )
++              }
++            ));
 +
              const { updatedURLs, notUpdatedURLs } = installReportPlugin;
              if (process.env.NODE_ENV !== 'production') {

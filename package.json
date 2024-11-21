@@ -126,7 +126,8 @@
       "@mozilla/readability": "patches/@mozilla__readability.patch",
       "daisyui": "patches/daisyui.patch",
       "jsonpointer": "patches/jsonpointer.patch",
-      "vite-plugin-pwa": "patches/vite-plugin-pwa.patch"
+      "vite-plugin-pwa": "patches/vite-plugin-pwa.patch",
+      "workbox-precaching": "patches/workbox-precaching.patch"
     },
     "overrides": {
       "is-core-module": "npm:@nolyfill/is-core-module@^1",
