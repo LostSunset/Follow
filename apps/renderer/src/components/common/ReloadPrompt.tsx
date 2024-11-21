@@ -12,6 +12,7 @@ export function ReloadPrompt() {
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(swUrl, r) {
+      console.info("onRegisteredSW", swUrl, r)
       if (period <= 0) return
       if (r?.active?.state === "activated") {
         registerPeriodicSync(period, swUrl, r)
@@ -21,6 +22,15 @@ export function ReloadPrompt() {
           if (sw.state === "activated") registerPeriodicSync(period, swUrl, r)
         })
       }
+    },
+    onRegisterError(error) {
+      console.error("Failed to register the service worker:", error)
+    },
+    onNeedRefresh() {
+      console.info("onNeedRefresh")
+    },
+    onOfflineReady() {
+      console.info("onOfflineReady")
     },
   })
 
