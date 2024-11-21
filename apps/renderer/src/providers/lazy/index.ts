@@ -22,19 +22,14 @@ const LazyExtensionExposeProvider = lazy(() =>
   })),
 )
 
-const ReloadPrompt = lazy(() =>
-  import("~/components/common/ReloadPrompt").then((module) => ({
-    default: module.ReloadPrompt,
-  })),
-)
-
 export {
   LazyContextMenuProvider,
   LazyExtensionExposeProvider,
   LazyLottieRenderContainer,
   LazyModalStackProvider,
-  ReloadPrompt,
 }
+
+export { ReloadPrompt } from "~/components/common/ReloadPrompt"
 
 const LazyExternalJumpInProvider = lazy(() =>
   import("../external-jump-in-provider").then((res) => ({
