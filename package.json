@@ -126,7 +126,6 @@
       "@mozilla/readability": "patches/@mozilla__readability.patch",
       "daisyui": "patches/daisyui.patch",
       "jsonpointer": "patches/jsonpointer.patch",
-      "workbox-precaching": "patches/workbox-precaching.patch",
       "vite-plugin-pwa": "patches/vite-plugin-pwa.patch"
     },
     "overrides": {
