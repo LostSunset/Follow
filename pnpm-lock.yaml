@@ -43,7 +43,7 @@ patchedDependencies:
     hash: 6yzwaylhgbwaqzkt5n4oaysok4
     path: patches/vite-plugin-pwa.patch
   workbox-precaching:
-    hash: olintddke3z22hp5ss4odcmd5i
+    hash: 2uvj6x6jqe7qtzi54jz7qztfc4
     path: patches/workbox-precaching.patch
 
 importers:
@@ -22676,7 +22676,7 @@ snapshots:
       workbox-expiration: 7.3.0
       workbox-google-analytics: 7.3.0
       workbox-navigation-preload: 7.3.0
-      workbox-precaching: 7.3.0(patch_hash=olintddke3z22hp5ss4odcmd5i)
+      workbox-precaching: 7.3.0(patch_hash=2uvj6x6jqe7qtzi54jz7qztfc4)
       workbox-range-requests: 7.3.0
       workbox-recipes: 7.3.0
       workbox-routing: 7.3.0
@@ -22710,7 +22710,7 @@ snapshots:
     dependencies:
       workbox-core: 7.3.0
 
-  workbox-precaching@7.3.0(patch_hash=olintddke3z22hp5ss4odcmd5i):
+  workbox-precaching@7.3.0(patch_hash=2uvj6x6jqe7qtzi54jz7qztfc4):
     dependencies:
       workbox-core: 7.3.0
       workbox-routing: 7.3.0
@@ -22725,7 +22725,7 @@ snapshots:
       workbox-cacheable-response: 7.3.0
       workbox-core: 7.3.0
       workbox-expiration: 7.3.0
-      workbox-precaching: 7.3.0(patch_hash=olintddke3z22hp5ss4odcmd5i)
+      workbox-precaching: 7.3.0(patch_hash=2uvj6x6jqe7qtzi54jz7qztfc4)
       workbox-routing: 7.3.0
       workbox-strategies: 7.3.0
 
