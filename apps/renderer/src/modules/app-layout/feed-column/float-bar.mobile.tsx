@@ -18,7 +18,6 @@ import { feedIconSelector } from "~/store/feed/selector"
 import { useUnreadByView } from "~/store/unread/hooks"
 
 import { ProfileButton } from "../../user/ProfileButton"
-import styles from "./mobile.module.css"
 
 export const MobileFloatBar = ({
   scrollContainer,
@@ -74,25 +73,28 @@ export const MobileFloatBar = ({
   }, [isScrollDown, animateController])
 
   return (
-    <m.div
+    <div
       className={clsx(
-        "absolute inset-x-0 flex h-10 justify-center will-change-transform bottom-safe-offset-8",
+        "pointer-events-none absolute inset-x-0 bottom-0 flex h-36 items-end overflow-hidden pb-safe-offset-6",
         className,
       )}
-      transition={{ type: "spring" }}
-      animate={animateController}
     >
-      <div className={styles["float-bar"]}>
-        <MotionButtonBase onClick={onLogoClick}>
-          <Logo className="size-5 shrink-0" />
-        </MotionButtonBase>
+      <m.div
+        className={clsx(
+          "mx-auto inline-flex h-10 min-w-0 items-center rounded-full border border-neutral-200 bg-background pl-4 pr-2 shadow-sm shadow-zinc-100 dark:border-neutral-800",
+          "[box-shadow:0px_8px_30px_rgba(122,122,122,0.2)] dark:[box-shadow:0px_8px_30px_rgba(122,122,122,0.2)]",
+          "pointer-events-auto",
+        )}
+        transition={{ type: "spring" }}
+        animate={animateController}
+      >
+        <PlayerIcon isScrollDown={isScrollDown} onLogoClick={onLogoClick} />
         <DividerVertical className="h-3/4 shrink-0" />
         <ViewTabs onViewChange={onViewChange} />
         <DividerVertical className="h-3/4 shrink-0" />
-        <PlayerIcon />
         <ProfileButton />
-      </div>
-    </m.div>
+      </m.div>
+    </div>
   )
 }
 
@@ -132,27 +134,39 @@ const ViewTabs = ({ onViewChange }: { onViewChange?: (view: number) => void }) =
   )
 }
 
-const PlayerIcon = () => {
+const PlayerIcon = ({
+  isScrollDown,
+  onLogoClick,
+}: {
+  isScrollDown: boolean
+  onLogoClick?: () => void
+}) => {
   const { isPlaying, entryId } = useAudioPlayerAtomSelector(
     useCallback((state) => ({ isPlaying: state.status === "playing", entryId: state.entryId }), []),
   )
   const feedId = useEntry(entryId, (s) => s.feedId)
   const feed = useFeedById(feedId, feedIconSelector)
   const [isShowPlayer, setIsShowPlayer] = useState(false)
-  if (!feed) return null
-  if (!isPlaying) return null
+  if (!feed || !isPlaying) {
+    return (
+      <MotionButtonBase onClick={onLogoClick}>
+        <Logo className="size-5 shrink-0" />
+      </MotionButtonBase>
+    )
+  }
+
   return (
     <>
-      <button
-        type="button"
-        className="mr-3 size-5 shrink-0"
-        onClick={() => setIsShowPlayer((v) => !v)}
-      >
-        <FeedIcon feed={feed} />
+      <button type="button" className="size-5 shrink-0" onClick={() => setIsShowPlayer((v) => !v)}>
+        <FeedIcon feed={feed} noMargin />
       </button>
 
-      {isShowPlayer && (
-        <CornerPlayer className="absolute bottom-12 left-0 w-full max-w-[350px] overflow-hidden rounded-r-lg" />
+      {isShowPlayer && !isScrollDown && (
+        <CornerPlayer
+          className="absolute inset-x-0 mx-auto w-full max-w-[350px] bottom-safe-or-12"
+          hideControls
+          rounded
+        />
       )}
     </>
   )

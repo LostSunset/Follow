@@ -1,6 +1,7 @@
 export interface GeneralSettings {
   appLaunchOnStartup: boolean
   language: string
+  translationLanguage: string
   startupScreen: "subscription" | "timeline"
   dataPersist: boolean
   sendAnonymousData: boolean
@@ -14,6 +15,10 @@ export interface GeneralSettings {
   voice: string
   reduceRefetch: boolean
   autoGroup: boolean
+  /**
+   * Top timeline for mobile
+   */
+  showQuickTimeline: boolean
 }
 
 export interface UISettings {
